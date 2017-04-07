@@ -25,7 +25,7 @@ module.exports = {
   ],
 
   entry : {
-    "index" : ["./src/index"],
+    "index" : ["./src/index.jsx", "./src/style.scss"],
   },
 
   output: {
@@ -38,7 +38,7 @@ module.exports = {
   target: "web",
 
   resolve: {
-    extensions: ['.js', 'jsx'],
+    extensions: ['.js', '.jsx'],
   },
   
   devtool : 'inline-source-map',
@@ -57,6 +57,11 @@ module.exports = {
         exclude : /node_modules/,
         include : __dirname + "/src"
       },
+      {
+        test : /\.scss$/,
+        loaders : ["style-loader", "css-loader", "sass-loader"],
+        include : __dirname + "/src"
+      }
     ]
   }
 };

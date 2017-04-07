@@ -1,0 +1,44 @@
+.item-name{
+  &.item-name-open{
+    input{
+      border : solid 1px whitesmoke;
+      border-radius : 2px;
+    }
+  }
+  &.item-name-close{
+    input{
+      border : none;
+      padding : 0px;
+      margin : 0px;
+    }
+  }
+}
+
+.item-children-toggle{
+  content:'';
+  display: inline-block;
+  position: relative;
+  border: 6px solid transparent;
+  border-left-color: #000;
+  &:hover{
+    cursor : pointer;
+  }
+  &.item-children-toggle-open{
+    top:3px; 
+    transform : rotate(90deg);
+  }
+  &.item-children-toggle-close{
+    left: 3px;
+    transform : rotate(0deg);
+  }
+}
+
+.item-children{
+  padding-left : 12px;
+  &.item-children-open{
+    display : block;
+  }
+  &.item-children-close{
+    display : none;
+  }
+}
