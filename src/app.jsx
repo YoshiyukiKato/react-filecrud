@@ -44,16 +44,17 @@ class FileNode extends Component{
     if(this.state.isChangeNameOpen){
       return (
         <div className={`item-name item-name-${this.state.isChangeNameOpen ? "open" : "close"}`}>
-          <input value={this.props.data.name} readOnly={false}
+          <input className="input" readOnly={false}
+                 value={this.props.data.name}
                  onChange={this.changeName.bind(this)}/>
-          <button onClick={this.ok.bind(this)}>OK</button>
-          <button onClick={this.cancel.bind(this)}>キャンセル</button>
+          <button className="button" onClick={this.ok.bind(this)}>変更</button>
+          <button className="button" onClick={this.cancel.bind(this)}>キャンセル</button>
         </div>
       );
     }else{
       return (
         <div className={`item-name item-name-${this.state.isChangeNameOpen ? "open" : "close"}`}>
-          <input value={this.props.data.name} readOnly={true}/>
+          <input className="input" readOnly={true} value={this.props.data.name}/>
         </div>
       );
     }
@@ -127,7 +128,7 @@ class DirNode extends FileNode{
       isChildrenOpen : false,
       isChangeNameOpen : false,
       prevName : null,
-      newNode : null
+      newChild : null
     }
   }
 
@@ -148,15 +149,15 @@ class DirNode extends FileNode{
               <SettingIcon/>
             </div>
             <ul className="item-menu-list">
-              <li onClick={this.openNewNode.bind(this, false)}>ファイルを追加</li>
-              <li onClick={this.openNewNode.bind(this, true)}>ディレクトリを追加</li>
+              <li onClick={this.openNewChild.bind(this, false)}>ファイルを追加</li>
+              <li onClick={this.openNewChild.bind(this, true)}>ディレクトリを追加</li>
               <li onClick={this.openChangeName.bind(this)}>名前の変更</li>
               <li onClick={this.remove.bind(this)}>削除</li>
             </ul>
           </div>
         </div>
         <div className={`item-children item-children-${this.state.isChildrenOpen ? "open" : "close"}`}>
-          {this.renderNewNode()}
+          {this.renderNewChild()}
           {this.renderChildren()}
         </div>
       </div>
@@ -172,31 +173,37 @@ class DirNode extends FileNode{
     });
   }
 
-  renderNewNode(){
-    return this.state.newNode ? <NewNode isDir={this.state.newNode.isDir}
+  renderNewChild(){
+    return this.state.newChild ? <NewChild isDir={this.state.newChild.isDir}
       addChild={this.addChild.bind(this)}
-      close={this.closeNewNode.bind(this)}/> : <div></div>;
+      close={this.closeNewChild.bind(this)}/> : <div></div>;
   }
 
   toggleChildren(){
     this.setState({ isChildrenOpen : !this.state.isChildrenOpen });
   }
 
-  openNewNode(isDir){
-    this.setState({ newNode : { isDir : isDir } });
+  openNewChild(isDir){
+    this.setState({ newChild : { isDir : isDir }, isChildrenOpen : true });
   }
   
-  closeNewNode(){
-    this.setState({ newNode : null });
+  closeNewChild(){
+    this.setState({ newChild : null });
   }
 
   addChild(name, isDir){
     const newChild = isDir ? { name : name, children : [] } : { name : name };
     this.state.data.children.push(newChild);
     this.state.data.children = this.state.data.children.sort((a, b) => {
-      return a.name > b.name;
+      if(!!a.children === !!b.children){
+        return a.name > b.name;
+      }else if(a.children){
+        return false;
+      }else{
+        return true;
+      }
     });
-    this.setState({ data : this.state.data, newNode : null });
+    this.setState({ data : this.state.data, newChild : null });
   }
 
   removeChild(index){
@@ -206,11 +213,40 @@ class DirNode extends FileNode{
 
   changeChild(index, child){
     this.state.data.children[index] = child;
+    this.state.data.children = this.state.data.children.sort((a, b) => {
+      if(!!a.children === !!b.children){
+        return a.name > b.name;
+      }else if(a.children){
+        return false;
+      }else{
+        return true;
+      }
+    });
     this.setState({ children : this.state.data.children });
+  }
+
+  moveChildOut(index){
+    const child = this.state.data.children.splice(index, 1);
+    this.setState({ children : this.state.data.children });
+    return child;
+  }
+
+  moveChildIn(child){
+    this.state.data.children.push(child);
+    this.state.data.children = this.state.data.children.sort((a, b) => {
+      if(!!a.children === !!b.children){
+        return a.name > b.name;
+      }else if(a.children){
+        return false;
+      }else{
+        return true;
+      }
+    });
+    this.setState({ data : this.state.data });
   }
 }
 
-class NewNode extends Component{
+class NewChild extends Component{
   constructor(props) {
     super(props);
     this.state = { name : "" };
@@ -220,10 +256,11 @@ class NewNode extends Component{
     return (
       <div className="item-node new-node">
         <input value={this.state.name}
+          className="input"
           placeholder={`新しい${this.props.isDir ? "ディレクトリ" : "ファイル"}名`}
           onChange={this.changeName.bind(this)}/>
-        <button onClick={this.ok.bind(this)}>OK</button>
-        <button onClick={this.cancel.bind(this)}>キャンセル</button>
+        <button className="button" onClick={this.ok.bind(this)}>作成</button>
+        <button className="button" onClick={this.cancel.bind(this)}>キャンセル</button>
       </div>
     );
   }
@@ -263,13 +300,13 @@ export default class RootNode extends DirNode{
               <SettingIcon/>
             </div>
             <ul className="item-menu-list">
-              <li onClick={this.openNewNode.bind(this, false)}>ファイルを追加</li>
-              <li onClick={this.openNewNode.bind(this, true)}>ディレクトリを追加</li>
+              <li onClick={this.openNewChild.bind(this, false)}>ファイルを追加</li>
+              <li onClick={this.openNewChild.bind(this, true)}>ディレクトリを追加</li>
             </ul>
           </div>
         </div>
         <div className={`item-children item-children-${this.state.isChildrenOpen ? "open" : "close"}`}>
-          {this.renderNewNode()}
+          {this.renderNewChild()}
           {this.renderChildren()}
         </div>
       </div>
