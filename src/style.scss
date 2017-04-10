@@ -121,14 +121,14 @@ input{
 .item-menu{
   position : relative;
   ul{
-    top :  0px;
+    top : $fontsize;
     left : $fontsize;
     position : absolute;
     z-index : 5;
     display : none;
     width : $fontsize * 12;
-    background-color : $c2;
-    
+    background-color : $c1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     li{
       .item-menu-icon{
         display : none;
@@ -136,7 +136,7 @@ input{
       @include padding($fontsize);
       &:hover{
         cursor : pointer;
-        background-color : $c4;
+        background-color : $c3;
       }
     }
   }
