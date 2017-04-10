@@ -4,75 +4,63 @@ import $ from 'jquery';
 import SettingIcon from "./icons/setting";
 import DirIcon from "./icons/directory";
 import FileIcon from "./icons/file";
+import ToggleIcon from "./icons/toggle";
 
-export default class DirNode extends Component{
-  constructor(props){
+class FileNode extends Component{
+  constructor(props) {
     super(props);
-    this.state = Object.assign(this.initialState, props);
+    this.state = props || {};
   }
+
   get initialState(){
     return {
-      isChildrenOpen : false,
-      isChangeNameOpen : false,
-      newNode : null
-    }
+      isChangeNameOpen : false
+    };
   }
 
   render(){
-    const ItemIcon = this.state.data.children ? DirIcon : FileIcon;
     return (
-      <div className="item-node dir-node">
-        <div className={`item-children-toggle item-children-toggle-${this.state.isChildrenOpen ? "open" : "close"}`}
-          onClick={this.toggleChildren.bind(this)}></div>
-        <div className="item-icon">
-          <ItemIcon/>
-        </div>
-        <div className={`item-name item-name-${this.state.isChangeNameOpen ? "open" : "close"}`}>
-          <input value={this.state.data.name} onChange={this.changeName.bind(this)}/>
-        </div>
-        <div className="item-menu-icon">
-          <SettingIcon/>
-        </div>
+      <div className={"item-node file-node"}>
+        <div className="item-header">
+          <div className="item-icon">
+            <FileIcon/>
+          </div>
+        {this.renderName()}
         <div className="item-menu">
-          <ul>
-            <li onClick={this.openNewNode.bind(this, false)}>ファイルを追加</li>
-            <li onClick={this.openNewNode.bind(this, true)}>ディレクトリを追加</li>
-            <li onClick={this.openChangeName.bind(this)}>名前の変更</li>
-            <li onClick={this.remove.bind(this)}>削除</li>
-          </ul>
-        </div>
-        <div className={`item-children item-children-${this.state.isChildrenOpen ? "open" : "close"}`}>
-          {this.renderNewNode()}
-          {this.renderChildren()}
+            <div className="item-menu-icon">
+              <SettingIcon/>
+            </div>
+            <ul className="item-menu-list">
+              <li onClick={this.openChangeName.bind(this)}>名前の変更</li>
+              <li onClick={this.remove.bind(this)}>削除</li>
+            </ul>
+          </div>
         </div>
       </div>
     );
   }
 
-  renderChildren(){
-    return this.state.data.children.map((child, index) => {
-      const ChildNode = child.children ? DirNode : FileNode;
-      return <ChildNode key={child.name} data={child}
-        change={this.changeChild.bind(this, index)}
-        remove={this.removeChild.bind(this, index)}/>;
-    });
-  }
   renderName(){
-
-  }
-  
-  renderNewNode(){
-    return this.state.newNode ? <NewNode isDir={this.state.newNode.isDir}
-      addChild={this.addChild.bind(this)}
-      close={this.closeNewNode.bind(this)}/> : <div></div>;
-  }
-
-  toggleChildren(){
-    this.setState({ isChildrenOpen : !this.state.isChildrenOpen });
+    if(this.state.isChangeNameOpen){
+      return (
+        <div className={`item-name item-name-${this.state.isChangeNameOpen ? "open" : "close"}`}>
+          <input value={this.props.data.name} readOnly={false}
+                 onChange={this.changeName.bind(this)}/>
+          <button onClick={this.ok.bind(this)}>OK</button>
+          <button onClick={this.cancel.bind(this)}>キャンセル</button>
+        </div>
+      );
+    }else{
+      return (
+        <div className={`item-name item-name-${this.state.isChangeNameOpen ? "open" : "close"}`}>
+          <input value={this.props.data.name} readOnly={true}/>
+        </div>
+      );
+    }
   }
 
   openChangeName(){
-    this.setState({ isChangeNameOpen : true })
+    this.setState({ prevName : this.state.data.name, isChangeNameOpen : true })
   }
 
   changeName(evt){
@@ -80,7 +68,11 @@ export default class DirNode extends Component{
     const newName = evt.target.value;
     this.state.data.name = newName;
     this.setState({ data : this.state.data });
+  }
+
+  ok(){
     if(this.props.change) this.props.change(this.state.data);
+    this.setState({ prevName : null, isChangeNameOpen : false });
     //サーバ側で権限周りの調整。相対パスは受け付けない仕様にする
     /*
     $.ajax({
@@ -99,9 +91,14 @@ export default class DirNode extends Component{
     });
     */
   }
+  
+  cancel(){
+    this.state.data.name = this.state.prevName;
+    this.setState({ data : this.state.data, prevName : null, isChangeNameOpen : false });
+  }
 
   remove(evt){
-    if(this.props.remove) this.props.remove();
+    this.props.remove();
     /*
     $.ajax({
       url : this.props.api,
@@ -117,6 +114,72 @@ export default class DirNode extends Component{
       }
     });
     */
+  }
+}
+
+class DirNode extends FileNode{
+  constructor(props){
+    super(props);
+    this.state = Object.assign(this.initialState, props);
+  }
+  get initialState(){
+    return {
+      isChildrenOpen : false,
+      isChangeNameOpen : false,
+      prevName : null,
+      newNode : null
+    }
+  }
+
+  render(){
+    return (
+      <div className="item-node dir-node">
+        <div className="item-header">
+          <div className={`item-children-toggle item-children-toggle-${this.state.isChildrenOpen ? "open" : "close"}`}
+            onClick={this.toggleChildren.bind(this)}>
+            <ToggleIcon/>
+          </div>
+          <div className="item-icon">
+            <DirIcon/>
+          </div>
+          {this.renderName()}
+          <div className="item-menu">
+            <div className="item-menu-icon">
+              <SettingIcon/>
+            </div>
+            <ul className="item-menu-list">
+              <li onClick={this.openNewNode.bind(this, false)}>ファイルを追加</li>
+              <li onClick={this.openNewNode.bind(this, true)}>ディレクトリを追加</li>
+              <li onClick={this.openChangeName.bind(this)}>名前の変更</li>
+              <li onClick={this.remove.bind(this)}>削除</li>
+            </ul>
+          </div>
+        </div>
+        <div className={`item-children item-children-${this.state.isChildrenOpen ? "open" : "close"}`}>
+          {this.renderNewNode()}
+          {this.renderChildren()}
+        </div>
+      </div>
+    );
+  }
+
+  renderChildren(){
+    return this.state.data.children.map((child, index) => {
+      const ChildNode = child.children ? DirNode : FileNode;
+      return <ChildNode key={child.name} data={child}
+        change={this.changeChild.bind(this, index)}
+        remove={this.removeChild.bind(this, index)}/>;
+    });
+  }
+
+  renderNewNode(){
+    return this.state.newNode ? <NewNode isDir={this.state.newNode.isDir}
+      addChild={this.addChild.bind(this)}
+      close={this.closeNewNode.bind(this)}/> : <div></div>;
+  }
+
+  toggleChildren(){
+    this.setState({ isChildrenOpen : !this.state.isChildrenOpen });
   }
 
   openNewNode(isDir){
@@ -177,80 +240,39 @@ class NewNode extends Component{
   }
 }
 
-class FileNode extends Component{
-  constructor(props) {
+export default class RootNode extends DirNode{
+  constructor(props){
     super(props);
-    this.state = props || {};
+    this.state = Object.assign(this.initialState, props);
   }
-
-  get initialState(){
-    return {
-      isChangeNameOpen : false
-    };
-  }
-
+  
   render(){
     return (
-      <div className={"item-node file-node"}>
-        <div className="item-icon"></div>
-        <div className={`item-name item-name-change-${this.isChangeNameOpen ? "open" : "close"}`} onClick={this.openChangeName.bind(this)}>
-          <input value={this.props.data.name} onChange={this.changeName}/>
-        </div>
-        <div className="item-menu">
-            <ul>
-              <li onClick={this.openChangeName.bind(this)}>名前の変更</li>
-              <li onClick={this.remove.bind(this)}>削除</li>
+      <div className="item-node dir-node">
+        <div className="item-header">
+          <div className={`item-children-toggle item-children-toggle-${this.state.isChildrenOpen ? "open" : "close"}`}
+            onClick={this.toggleChildren.bind(this)}>
+            <ToggleIcon/>
+          </div>
+          <div className="item-icon">
+            <DirIcon/>
+          </div>
+          {this.renderName()}
+          <div className="item-menu">
+            <div className="item-menu-icon">
+              <SettingIcon/>
+            </div>
+            <ul className="item-menu-list">
+              <li onClick={this.openNewNode.bind(this, false)}>ファイルを追加</li>
+              <li onClick={this.openNewNode.bind(this, true)}>ディレクトリを追加</li>
             </ul>
+          </div>
+        </div>
+        <div className={`item-children item-children-${this.state.isChildrenOpen ? "open" : "close"}`}>
+          {this.renderNewNode()}
+          {this.renderChildren()}
         </div>
       </div>
     );
-  }
-
-  openChangeName(){
-    this.setState({ isChangeNameOpen : true })
-  }
-
-  changeName(evt){
-    const oldName = this.state.data.name;
-    const newName = evt.target.value;
-    this.state.data.name = newName;
-    this.props.change(this.state.data);
-    this.setState({ data : this.state.data });
-    //サーバ側で権限周りの調整。相対パスは受け付けない仕様にする
-    /*
-    $.ajax({
-      url : this.props.filecrudAPI,
-      data : {
-        oldPath : `${this.props.dirpath}/${oldName}`,
-        newPath :  `${this.props.dirpath}/${newName}`
-      },
-      success : () => {
-        this.setState({ name : newName });
-      },
-      error : (err) => {
-        //エラー起きたら表示
-        console.log(err);
-      }
-    });
-    */
-  }
-
-  remove(evt){
-    this.props.remove();
-    /*
-    $.ajax({
-      url : this.props.api,
-      data : {
-        path : `${this.props.dirpath}/${this.state.name}`,
-      },
-      success : () => {
-        this.props.handleRemove();
-      },
-      error : (err) => {
-        //エラー起きたら表示
-        console.log(err);
-      }
-    });
-    */
   }
 }

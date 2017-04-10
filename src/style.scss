@@ -1,40 +1,135 @@
-.item-name{
-  &.item-name-open{
-    input{
-      border : solid 1px whitesmoke;
-      border-radius : 2px;
-    }
+$fontsize: 12px;
+//とりあえずモノクロで作る
+$c1 : #FAFAFA;
+$c2 : #F5F5F5;
+$c3 : #EEEEEE;
+$c4 : #E0E0E0;
+$c5 : #BDBDBD;
+$c6 : #9E9E9E;
+$c7 : #757575;
+$c8 : #616161;
+$c9 : #424242;
+$c10 : #212121;
+
+@mixin padding($basesize){
+  @include padding-hrz($basesize);
+  @include padding-vrt($basesize / 3);
+}
+
+@mixin padding-vrt($size){
+  padding-top : $size;
+  padding-bottom : $size;
+}
+
+@mixin padding-hrz($size){
+  padding-left : $size;
+  padding-right : $size;
+}
+
+@mixin margin($basesize){
+  @include margin-hrz($basesize);
+  @include margin-vrt($basesize / 3);
+}
+
+@mixin margin-vrt($size){
+  margin-top : $size;
+  margin-bottom : $size;
+}
+
+@mixin margin-hrz($size){
+  margin-left : $size;
+  margin-right : $size;
+}
+
+*{
+  padding : 0px;
+  margin : 0px;
+  font-size : $fontsize;
+}
+
+.file-node .item-header{
+  padding-left : $fontsize;//数合わせ
+}
+
+.item-header{
+  display : flex;
+  
+  &:hover{
+    background-color : $c2;
   }
+  & > div{
+    @include padding-vrt($fontsize / 3);
+  }
+  .item-icon, .item-name{
+    @include margin-hrz($fontsize / 2);
+  }
+}
+
+ul li{
+  list-style: none;
+}
+
+input{
+  border : solid 1px $c3;
+  border-radius : 2px;
+}
+
+.item-name{
   &.item-name-close{
     input{
       border : none;
       padding : 0px;
       margin : 0px;
+      background-color : white;
+      &[readonly]{
+        background-color : rgba(0,0,0,0);
+      }
     }
   }
 }
 
+.item-menu{
+  position : relative;
+  ul{
+    top :  0px;
+    left : $fontsize;
+    position : absolute;
+    z-index : 5;
+    display : none;
+    width : $fontsize * 12;
+    background-color : $c2;
+    
+    li{
+      .item-menu-icon{
+        display : none;
+      }
+      @include padding($fontsize);
+      &:hover{
+        cursor : pointer;
+        background-color : $c4;
+      }
+    }
+  }
+  
+  &:hover ul{
+    display : block;
+  }
+}
+
 .item-children-toggle{
-  content:'';
-  display: inline-block;
-  position: relative;
-  border: 6px solid transparent;
-  border-left-color: #000;
   &:hover{
     cursor : pointer;
   }
-  &.item-children-toggle-open{
-    top:3px; 
-    transform : rotate(90deg);
-  }
-  &.item-children-toggle-close{
-    left: 3px;
+  &.item-children-toggle-open svg{
     transform : rotate(0deg);
+  }
+  &.item-children-toggle-close svg{
+    transform : rotate(-90deg);
   }
 }
 
 .item-children{
-  padding-left : 12px;
+  padding-left : $fontsize;
   &.item-children-open{
     display : block;
   }
