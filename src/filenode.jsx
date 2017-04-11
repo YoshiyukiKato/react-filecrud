@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
 import $ from 'jquery';
+import { DragSource } from "react-dnd";
 import SettingIcon from "./icons/setting";
 import FileIcon from "./icons/file";
 
-export default class FileNode extends Component{
+export class FileNode extends Component{
   constructor(props, context) {
     super(props, context);
     this.state = Object.assign(this.initialState, props);
@@ -16,8 +17,9 @@ export default class FileNode extends Component{
   }
 
   render(){
-    return (
-      <div className={"item-node file-node"} draggable={true}>
+    const { connectDragSource, isDragging } = this.props;
+    return connectDragSource(
+      <div className={"item-node file-node"}>
         <div className="item-header">
           <div className="item-icon">
             <FileIcon/>
@@ -113,4 +115,31 @@ export default class FileNode extends Component{
     });
     */
   }
+
+  handleDrop(evt){
+    console.log(evt);
+  }
 }
+
+const fileSource = {
+  beginDrag(props, monitor, component) {
+    return props;
+  },
+  
+  endDrag(props, monitor, component) {
+    const { moved } = monitor.getDropResult() || {};
+    if(moved) props.moveOut();
+  },
+};
+
+/**
+ * Specifies the props to inject into your component.
+ */
+function sourceCollect(connect, monitor) {
+  return {
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging()
+  };
+}
+
+export const FileNodeDnD = DragSource('item-node', fileSource, sourceCollect)(FileNode);

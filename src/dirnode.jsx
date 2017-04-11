@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
+import { DropTarget, DragSource } from "react-dnd";
 
-import FileNode from "./filenode";
+import { FileNode, FileNodeDnD } from "./filenode";
 import SettingIcon from "./icons/setting";
 import DirIcon from "./icons/directory";
 import ToggleIcon from "./icons/toggle";
 
-export default class DirNode extends FileNode{
+export class DirNode extends FileNode{
   constructor(props, context){
     super(props, context);
     this.state = Object.assign(this.initialState, props);
@@ -21,8 +22,10 @@ export default class DirNode extends FileNode{
   }
 
   render(){
-    return (
-      <div className="item-node dir-node" draggable={true}>
+    const { connectDropTarget, connectDragSource, isDragging } = this.props;
+
+    return connectDropTarget(connectDragSource(
+      <div className="item-node dir-node">
         <div className="item-header">
           <div className={`item-children-toggle item-children-toggle-${this.state.isChildrenOpen ? "open" : "close"}`}
             onClick={this.toggleChildren.bind(this)}>
@@ -44,20 +47,24 @@ export default class DirNode extends FileNode{
             </ul>
           </div>
         </div>
-        <div className={`item-children item-children-${this.state.isChildrenOpen ? "open" : "close"}`} onDragLeave={this.moveChildIn.bind(this)}>
+        <div className={`item-children item-children-${this.state.isChildrenOpen ? "open" : "close"}`}>
           {this.renderNewChild()}
           {this.renderChildren()}
         </div>
       </div>
-    );
+    ));
   }
 
   renderChildren(){
     return this.state.data.children.map((child, index) => {
-      const ChildNode = child.children ? DirNode : FileNode;
+      //const ChildNode = child.children ? DirNode : FileNode;
+      const ChildNode = child.children ? DirNodeDnD : FileNodeDnD;
       return <ChildNode key={child.name} data={child}
+        parentName={this.props.data.name}
         change={this.changeChild.bind(this, index)}
-        remove={this.removeChild.bind(this, index)}/>;
+        remove={this.removeChild.bind(this, index)}
+        moveOut={this.moveChildOut.bind(this, index)}
+        moveIn={this.moveChildIn.bind(this,index)}/>;
     });
   }
 
@@ -119,11 +126,10 @@ export default class DirNode extends FileNode{
     return child;
   }
 
-  moveChildIn(child){
-    console.log(child);
-    /*
-    this.state.data.children.push(child);
-    this.state.data.children = this.state.data.children.sort((a, b) => {
+  moveChildIn(index, grandChild){
+    const child = this.state.data.children[index];
+    child.children.push(grandChild);
+    child.children = child.children.sort((a, b) => {
       if(!!a.children === !!b.children){
         return a.name > b.name;
       }else if(a.children){
@@ -133,7 +139,6 @@ export default class DirNode extends FileNode{
       }
     });
     this.setState({ data : this.state.data });
-    */
   }
 }
 
@@ -167,3 +172,56 @@ class NewChild extends Component{
     this.props.close();
   }
 }
+
+//dnd setting
+
+const dirSource = {
+  beginDrag(props, monitor, component) {
+    return props;
+  },
+  
+  endDrag(props, monitor, component) {
+    const { moved } = monitor.getDropResult() || {};
+    if(moved) props.moveOut();
+  },
+};
+
+/**
+ * Specifies the props to inject into your component.
+ */
+function sourceCollect(connect, monitor) {
+  return {
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging()
+  };
+}
+
+const DirNodeDrag = DragSource('item-node', dirSource, sourceCollect)(DirNode);
+
+const dirTarget = {
+  drop(props, monitor, component) {
+    if (monitor.didDrop()) {
+      return;
+    }
+    const item = monitor.getItem();
+    if(props.data.name !== item.parentName){
+      props.moveIn(item.data);
+      return { moved: true };
+    }
+  }
+}
+
+function targetCollect(connect, monitor) {
+  return {
+    // Call this function inside render()
+    // to let React DnD handle the drag events:
+    connectDropTarget: connect.dropTarget(),
+    // You can ask the monitor about the current drag state:
+    isOver: monitor.isOver(),
+    isOverCurrent: monitor.isOver({ shallow: true }),
+    canDrop: monitor.canDrop(),
+    itemType: monitor.getItemType()
+  };
+}
+
+export const DirNodeDnD = DropTarget('item-node', dirTarget, targetCollect)(DirNodeDrag);
